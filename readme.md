@@ -1,0 +1,1 @@
+This is a 'fork' (no github repo exists) of a simple stocks widget by Adam Courtemanche
