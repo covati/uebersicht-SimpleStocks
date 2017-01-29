@@ -4,8 +4,15 @@ symbols = "TDC+AAPL+GOOG+TWTR+%5EIXIC+%5EGSPC"
 # See http://www.jarloo.com/yahoo_finance/ for Yahoo Finance options
 command: "curl -s 'http://download.finance.yahoo.com/d/quotes.csv?s=#{symbols}&f=sl1c1p2' | sed 's/\"//g'"
 
+# images are from Yahoo and are of the format:
+#  http://chart.finance.yahoo.com/z?s=TDC&t=2w&q=l&l=on&z=s&p=m10,m45
+# s=TDC - quote name
+# t=3m - time frame of X axis, m = months, w = weeks, d = days; I've seen the moving averages break with the days time period
+# z=s - size: s, m, l
+# p=m10,m45 - moving averages in days
+
 # Refresh every 5 minutes
-refreshFrequency: 300000
+refreshFrequency: '5m'
 
 style: """
   bottom: 10%
@@ -64,12 +71,16 @@ style: """
 """
 
 render: -> """
-  <table><tr><td>Loading...</td></tr></table>
+  <table id='stocks'><tr><td>Loading...</td></tr></table>
+  <table><tr>
+    <td><img width=182 src="http://chart.finance.yahoo.com/z?s=TDC&t=2w&q=l&l=on&z=s&p=m10,m45"></td>
+    <td><img width=182 src="http://chart.finance.yahoo.com/z?s=AAPL&t=2w&q=l&l=on&z=s&p=m10,m45"></td>
+  </tr></table>
 """
 
 update: (output, domEl) ->
   stocks = output.split('\n')
-  table  = $(domEl).find('table')
+  table  = $(domEl).find('#stocks')
   table.html ""
 
   renderStock = (label, val, change, changepct) ->
@@ -82,7 +93,6 @@ update: (output, domEl) ->
         direction = 'up'
     if (changepct.charAt(0) == '-' && change*-1>1)
         direction = 'down'
-
     """
     <td>
       <div class='wrapper'>
