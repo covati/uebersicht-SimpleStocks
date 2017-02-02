@@ -1,5 +1,7 @@
 # Separate stock symbols with a plus sign
-symbols = "TDC+AAPL+GOOG+TWTR+%5EIXIC+%5EGSPC"
+#  S&P500 - %5EGSPC
+#  NASDAQ - %5EIXIC
+symbols = "TDC+AAPL+GD+TWTR+%5EIXIC+%5EGSPC"
 
 # See http://www.jarloo.com/yahoo_finance/ for Yahoo Finance options
 command: "curl -s 'http://download.finance.yahoo.com/d/quotes.csv?s=#{symbols}&f=sl1c1p2' | sed 's/\"//g'"
@@ -9,7 +11,7 @@ command: "curl -s 'http://download.finance.yahoo.com/d/quotes.csv?s=#{symbols}&f
 # s=TDC - quote name
 # t=3m - time frame of X axis, m = months, w = weeks, d = days; I've seen the moving averages break with the days time period
 # z=s - size: s, m, l
-# p=m10,m45 - moving averages in days
+# p=m10,m45 - moving averages in days; don't seem to work predictably with shorter time frames
 
 # Refresh every 5 minutes
 refreshFrequency: '5m'
@@ -46,9 +48,15 @@ style: """
     text-shadow: 0 0 1px rgba(#000, 0.5)
     background: rgba(#000, 0.3)
 
+  .td_img
+    background: none
+    border: 0px solid #fff
+    padding: 2px
+
   .wrapper
     padding: 4px 6px 4px 6px
     position: relative
+
 
   .info
     padding: 0
@@ -59,6 +67,9 @@ style: """
     color: #ddd
     text-overflow: ellipsis
     text-shadow: none
+
+  .selected
+    background: rgba(#090, 0.12)
 
   .up
     color: #050
@@ -71,37 +82,44 @@ style: """
 """
 
 render: -> """
-  <table id='stocks'><tr><td>Loading...</td></tr></table>
-  <table><tr>
-    <td><img width=182 src="http://chart.finance.yahoo.com/z?s=TDC&t=2w&q=l&l=on&z=s&p=m10,m45"></td>
-    <td><img width=182 src="http://chart.finance.yahoo.com/z?s=AAPL&t=2w&q=l&l=on&z=s&p=m10,m45"></td>
-  </tr></table>
+  <table id='stock_quotes'><tr><td>Loading...</td></tr></table>
+  <table><tr id='stock_images'  style='height:12px;'></tr></table>
 """
 
 update: (output, domEl) ->
   stocks = output.split('\n')
-  table  = $(domEl).find('#stocks')
+  table  = $(domEl).find('#stock_quotes')
   table.html ""
+
+# Update the charts to pick a random stock and display moving trend and recent days
+  img_row  = $(domEl).find('#stock_images')
+  symbol_str=stocks[Math.floor(Math.random()*(stocks.length-1))]
+  img_args = symbol_str.split(',')
+  symbol=img_args[0]
+  img_row.html("
+  <td class='td_img'><img width=182 src=\"http://chart.finance.yahoo.com/z?s=#{symbol}&t=2w&q=l&l=on&z=s&p=m10,m45\"></td>
+  <td class='td_img'><img width=182 src=\"http://chart.finance.yahoo.com/z?s=#{symbol}&t=5d&q=l&l=on&z=s\"></td>")
+  #img_row.html("<td style='height: 30px;'>TEST</td>")
 
   renderStock = (label, val, change, changepct) ->
 # Use a neutral color for no change or for minor change
     direction = 'neutral'
-#    direction = if (changepct.charAt(0) == '+') then 'up' else 'down'
-#    direction = if (changepct.charAt(0) == '+' && change>2) then 'up'
-#    direction = if (changepct.charAt(0) == '-') then 'down'
+    selected = ''
     if (changepct.charAt(0) == '+' && change>1)
         direction = 'up'
     if (changepct.charAt(0) == '-' && change*-1>1)
         direction = 'down'
+# Identify which of the symbols we are showing in the charts below
+    if (label == symbol)
+        selected = 'selected'
     """
     <td>
-      <div class='wrapper'>
+      <div class='wrapper #{selected}'>
         #{label} #{val}
         <div class='info #{direction}'>#{change} (#{changepct.replace /\s/g, ''})</div>
       </div>
     </td>
     """
-
   for stock, i in stocks
     args = stock.split(',')
     if i % 2 == 0
