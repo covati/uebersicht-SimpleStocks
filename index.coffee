@@ -84,8 +84,9 @@ style: """
 
 render: -> """
   <table id='stock_quotes'><tr><td>Loading...</td></tr></table>
-  <table><tr id='stock_images'  style='height:12px;'><td><div style="height:110px;"><center>Loading...</center></div></td>
-  <td><div style="height:110;"><center>Loading...</center></div></td></tr></table>
+  <table><tr id='stock_images'  style='height:112px;'>
+    <td></td><td></td>
+  </tr></table>
 """
 
 update: (output, domEl) ->
